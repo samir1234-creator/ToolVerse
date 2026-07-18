@@ -144,7 +144,7 @@ export default function ScientificCalculator() {
         variants={slideUp}
         initial="initial"
         animate="animate"
-        className="rounded-t-[36px] border-t border-[var(--color-line)] px-4 pb-[calc(env(safe-area-inset-bottom)+28px)] pt-4 flex flex-col"
+        className="rounded-t-[36px] border-t border-[var(--color-line)] px-4 pb-[calc(env(safe-area-inset-bottom)+44px)] pt-4 flex flex-col"
         style={{
           background: 'linear-gradient(180deg, #161820f0 0%, #0d0e14f8 100%)',
           boxShadow: '0 -8px 40px #8b5cf618, 0 -1px 0 #8b5cf625',
