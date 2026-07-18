@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+@import "@fontsource/space-grotesk/latin-500.css";
+@import "@fontsource/space-grotesk/latin-600.css";
+@import "@fontsource/space-grotesk/latin-700.css";
+@import "@fontsource/space-grotesk/latin-ext-500.css";
+@import "@fontsource/space-grotesk/latin-ext-600.css";
+@import "@fontsource/space-grotesk/latin-ext-700.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
+@import "@fontsource/jetbrains-mono/latin-700.css";
+@import "@fontsource/jetbrains-mono/latin-ext-400.css";
+@import "@fontsource/jetbrains-mono/latin-ext-500.css";
+@import "@fontsource/jetbrains-mono/latin-ext-700.css";
+
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── Dark (Default) ── */
+  --color-bg:         #0d0e14;
+  --color-surface:    #161820;
+  --color-surface-2:  #1e2030;
+  --color-surface-3:  #252840;
+  --color-line:       #2a2d45;
+  --color-accent:     #8b5cf6;
+  --color-accent-2:   #6366f1;
+  --color-accent-soft:#8b5cf620;
+  --color-accent-glow:#8b5cf640;
+  --color-warm:       #f59e0b;
+  --color-warm-soft:  #f59e0b20;
+  --color-text:       #f0eeff;
+  --color-text-muted: #8b8aaa;
+  --color-danger:     #f43f5e;
+  --color-success:    #10b981;
+
+  /* ── Light ── */
+  --color-bg-light:         #f5f3ff;
+  --color-surface-light:    #ffffff;
+  --color-surface-2-light:  #ede9ff;
+  --color-surface-3-light:  #ddd6fe;
+  --color-line-light:       #c4b5fd;
+  --color-text-light:       #1e1b4b;
+  --color-text-muted-light: #6d6aac;
+  --color-accent-soft-light:#8b5cf625;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ─── Light Mode ─────────────────────────────────── */
+body.theme-light {
+  background: var(--color-bg-light);
+  color: var(--color-text-light);
+  --color-bg: var(--color-bg-light);
+  --color-surface: var(--color-surface-light);
+  --color-surface-2: var(--color-surface-2-light);
+  --color-surface-3: var(--color-surface-3-light);
+  --color-line: var(--color-line-light);
+  --color-text: var(--color-text-light);
+  --color-text-muted: var(--color-text-muted-light);
+  --color-accent-soft: var(--color-accent-soft-light);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Glass Surfaces ───────────────────────────────── */
+.glass {
+  background: color-mix(in srgb, var(--color-surface) 68%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.glass-strong {
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+}
+
+.glass-dark {
+  background: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+body.theme-light .glass {
+  background: color-mix(in srgb, var(--color-surface-light) 80%, transparent);
+}
+
+body.theme-light .glass-strong {
+  background: color-mix(in srgb, var(--color-surface-light) 90%, transparent);
+}
+
+/* ─── Glow Effects ─────────────────────────────────── */
+.glow-accent {
+  box-shadow: 0 0 20px var(--color-accent-glow), 0 0 40px var(--color-accent-soft);
+}
+
+.glow-sm {
+  box-shadow: 0 0 12px var(--color-accent-soft);
+}
+
+.glow-border {
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+/* ─── Animated gradient bg ───────────────────────── */
+.gradient-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, #8b5cf615 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, #6366f110 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, #f59e0b08 0%, transparent 60%),
+    var(--color-bg);
+}
+
+body.theme-light .gradient-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, #8b5cf618 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, #6366f112 0%, transparent 55%),
+    var(--color-bg-light);
+}
+
+/* ─── Floating orbs (for splash) ─────────────────── */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33%       { transform: translateY(-18px) translateX(10px); }
+  66%       { transform: translateY(8px) translateX(-8px); }
+}
+@keyframes float-orb-2 {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33%       { transform: translateY(14px) translateX(-12px); }
+  66%       { transform: translateY(-10px) translateX(6px); }
+}
+@keyframes float-orb-3 {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50%       { transform: translateY(-22px) translateX(-6px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 30px #8b5cf640, 0 0 60px #8b5cf620; }
+  50%       { box-shadow: 0 0 50px #8b5cf660, 0 0 90px #8b5cf630; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.orb-1 { animation: float-orb-1 6s ease-in-out infinite; }
+.orb-2 { animation: float-orb-2 8s ease-in-out infinite; }
+.orb-3 { animation: float-orb-3 7s ease-in-out infinite; }
+.pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--color-text) 25%,
+    var(--color-accent) 50%,
+    var(--color-text) 75%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ─── Number display ─────────────────────────────── */
+.calc-display {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-surface-2) 90%, var(--color-accent) 10%) 0%,
+    var(--color-surface) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+/* ─── Reduced motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ─── Safe Area Global Padding overrides ─────────── */
+.pb-28 {
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom)) !important;
+}
+
+/* Side padding for notch / cutouts in landscape orientation */
+html, body, #root {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
