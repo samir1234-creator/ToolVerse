@@ -77,71 +77,67 @@ export default function ScientificCalculator() {
   return (
     <div className="flex h-full flex-col gradient-mesh overflow-hidden">
 
-      {/* ── Top: Display area ─────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-1 flex-col min-h-0"
-      >
-        {/* Mini header */}
-        <div className="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+32px)] pb-3">
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={() => { haptics.light(); navigate(-1); }}
-            className="flex h-9 w-9 items-center justify-center rounded-full"
-            style={{ background: 'var(--color-surface-2)' }}
-          >
-            <ChevronLeft size={20} color="var(--color-text-muted)" />
-          </motion.button>
-          <span className="font-display text-base font-semibold text-[var(--color-text)]">Scientific</span>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMode((m) => (m === 'deg' ? 'rad' : 'deg'))}
-            className="rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest"
-            style={{
-              background: 'linear-gradient(135deg, #8b5cf620, #6366f115)',
-              border: '1px solid #8b5cf640',
-              color: 'var(--color-accent)',
-            }}
-          >
-            {mode}
-          </motion.button>
-        </div>
+      {/* Mini header */}
+      <div className="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+32px)] pb-3">
+        <motion.button
+          whileTap={{ scale: 0.88 }}
+          onClick={() => { haptics.light(); navigate(-1); }}
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+          style={{ background: 'var(--color-surface-2)' }}
+        >
+          <ChevronLeft size={20} color="var(--color-text-muted)" />
+        </motion.button>
+        <span className="font-display text-base font-semibold text-[var(--color-text)]">Scientific</span>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setMode((m) => (m === 'deg' ? 'rad' : 'deg'))}
+          className="rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest"
+          style={{
+            background: 'linear-gradient(135deg, #8b5cf620, #6366f115)',
+            border: '1px solid #8b5cf640',
+            color: 'var(--color-accent)',
+          }}
+        >
+          {mode}
+        </motion.button>
+      </div>
 
-        {/* Expression + result */}
-        <div className="flex flex-1 flex-col justify-end px-6 pb-4 text-right overflow-hidden">
-          <p className="font-mono text-sm leading-snug text-[var(--color-text-muted)] break-all opacity-70">
-            {expr || '0'}
-          </p>
-          <AnimatePresence mode="popLayout">
-            {(() => {
-              const formatted = preview !== null
-                ? preview.toLocaleString('en-IN', { maximumFractionDigits: 8 })
-                : '0';
-              return (
-                <motion.p
-                  key={preview !== null ? String(preview) : '__zero__'}
-                  variants={slideX}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="mt-1 font-mono font-bold tabular-nums break-all leading-tight"
-                  style={{
-                    fontSize: getResultFontSize(formatted),
-                    transition: 'font-size 0.2s ease',
-                    background: 'linear-gradient(90deg, #f0eeff 30%, #a78bfa 80%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {formatted}
-                </motion.p>
-              );
-            })()}
-          </AnimatePresence>
-        </div>
-      </motion.div>
+      {/* ── Display Panel — single fixed box, nothing changes size, matching basic calculator style ── */}
+      <div
+        className="calc-display mx-4 mt-1 mb-3 flex flex-col justify-end overflow-hidden rounded-3xl px-5 pt-4 pb-4 text-right"
+        style={{ height: '8.5rem', minHeight: '8.5rem', maxHeight: '8.5rem' }}
+      >
+        {/* Expression */}
+        <p className="font-mono text-sm leading-snug text-[var(--color-text-muted)] break-all opacity-70">
+          {expr || '0'}
+        </p>
+
+        {/* Result — auto-shrinking, sharp text color with glow */}
+        <AnimatePresence mode="popLayout">
+          {(() => {
+            const formatted = preview !== null
+              ? preview.toLocaleString('en-IN', { maximumFractionDigits: 8 })
+              : '0';
+            return (
+              <motion.p
+                key={preview !== null ? String(preview) : '__zero__'}
+                variants={slideX}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="mt-1 font-mono font-bold tabular-nums break-all leading-tight text-[var(--color-text)]"
+                style={{
+                  fontSize: getResultFontSize(formatted),
+                  textShadow: '0 0 28px #8b5cf650',
+                  transition: 'font-size 0.2s ease',
+                }}
+              >
+                {formatted}
+              </motion.p>
+            );
+          })()}
+        </AnimatePresence>
+      </div>
 
       {/* ── Bottom: Glass keypad panel ────────────── */}
       <motion.div
