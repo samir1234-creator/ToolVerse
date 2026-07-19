@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import logoImg from '@/assets/logo.png';
 
 export function SplashScreen() {
   return (
@@ -51,7 +52,7 @@ export function SplashScreen() {
               boxShadow: '0 0 40px #8b5cf660, 0 0 80px #8b5cf630, inset 0 1px 0 #ffffff25',
             }}
           >
-            <img src="/src/assets/logo.png" alt="ToolVerse" className="h-20 w-20 object-cover rounded-[24px]" />
+            <img src={logoImg} alt="ToolVerse" className="h-20 w-20 object-cover rounded-[24px]" />
           </div>
         </motion.div>
 

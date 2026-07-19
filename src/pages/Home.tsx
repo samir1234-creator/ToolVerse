@@ -7,6 +7,7 @@ import { tools, getToolById } from '@/constants/tools';
 import { useAppStore } from '@/hooks/useAppStore';
 import { pageVariants, staggerContainer, staggerItem } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
+import logoImg from '@/assets/logo.png';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -69,7 +70,7 @@ export default function Home() {
             className="flex h-10 w-10 items-center justify-center rounded-2xl"
             style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 4px 16px #8b5cf640' }}
           >
-            <img src="/src/assets/logo.png" alt="ToolVerse" className="h-9 w-9 rounded-xl object-cover" />
+            <img src={logoImg} alt="ToolVerse" className="h-9 w-9 rounded-xl object-cover" />
           </motion.div>
         </div>
 

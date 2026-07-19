@@ -17,11 +17,25 @@ export default function CompassTool() {
     }
 
     const handleOrientation = (e: any) => {
-      // webkitCompassHeading is iOS specific.
-      // e.alpha is standard. For absolute orientation on Chrome/Android, standard heading is 360 - alpha.
-      const compassHeading = e.webkitCompassHeading !== undefined
-        ? e.webkitCompassHeading
-        : (e.alpha !== null ? 360 - e.alpha : 0);
+      let compassHeading = 0;
+      if (e.webkitCompassHeading !== undefined) {
+        compassHeading = e.webkitCompassHeading;
+      } else if (e.alpha !== null) {
+        // Standard alpha is counter-clockwise.
+        // On Android WebView, e.alpha=0 corresponds to West instead of North.
+        // We correct this 90-degree offset by subtracting 90 degrees.
+        compassHeading = (360 - e.alpha - 90 + 360) % 360;
+      }
+
+      // Add screen orientation offset to adjust for landscape/portrait rotation
+      let screenAngle = 0;
+      if (window.screen && window.screen.orientation) {
+        screenAngle = window.screen.orientation.angle;
+      } else if (window.orientation !== undefined) {
+        screenAngle = typeof window.orientation === 'number' ? window.orientation : parseInt(window.orientation);
+      }
+
+      compassHeading = (compassHeading + screenAngle) % 360;
       setHeading(Math.round(compassHeading));
     };
 
