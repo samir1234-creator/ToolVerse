@@ -16,11 +16,18 @@ export default function CompassTool() {
       return;
     }
 
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      // webkitCompassHeading is iOS specific, alpha is standard (but needs negation or adjustment)
-      const compassHeading = (e as any).webkitCompassHeading || (e.alpha !== null ? 360 - e.alpha : 0);
+    const handleOrientation = (e: any) => {
+      // webkitCompassHeading is iOS specific.
+      // e.alpha is standard. For absolute orientation on Chrome/Android, standard heading is 360 - alpha.
+      const compassHeading = e.webkitCompassHeading !== undefined
+        ? e.webkitCompassHeading
+        : (e.alpha !== null ? 360 - e.alpha : 0);
       setHeading(Math.round(compassHeading));
     };
+
+    // Determine absolute orientation event support (Chrome/Android webviews)
+    const isAbsoluteSupported = 'ondeviceorientationabsolute' in window;
+    const eventName = isAbsoluteSupported ? 'deviceorientationabsolute' : 'deviceorientation';
 
     // Request permissions for iOS 13+ devices
     const requestPermission = async () => {
@@ -29,7 +36,7 @@ export default function CompassTool() {
         try {
           const res = await doc.requestPermission();
           if (res === 'granted') {
-            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('deviceorientation', handleOrientation, true);
             setPermission('granted');
           } else {
             setPermission('denied');
@@ -39,7 +46,7 @@ export default function CompassTool() {
         }
       } else {
         // Android / Non-iOS doesn't require explicit popup
-        window.addEventListener('deviceorientation', handleOrientation);
+        window.addEventListener(eventName, handleOrientation, true);
         setPermission('granted');
       }
     };
@@ -47,7 +54,8 @@ export default function CompassTool() {
     requestPermission();
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
     };
   }, []);
 
