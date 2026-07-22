@@ -1,174 +1,145 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { pageVariants } from '@/animations/variants';
 import { Compass, AlertCircle, Navigation, MapPin, Sliders, RefreshCw, CompassIcon, ShieldCheck } from 'lucide-react';
 import { haptics } from '@/utils/haptics';
 
-// Approximate magnetic declination helper based on coordinates
+// Calculate World Magnetic Model declination based on lat/lng
 function getMagneticDeclination(lat: number, lng: number): number {
-  // World Magnetic Model simplified spherical harmonics approximation
   const radLat = (lat * Math.PI) / 180;
   const radLng = (lng * Math.PI) / 180;
   const dec = -15.0 * Math.sin(radLng) * Math.cos(radLat) + 3.2 * Math.sin(radLat);
   return Math.round(dec * 10) / 10;
 }
 
+// 3D Tilt-compensated compass heading from alpha, beta, gamma
+function computeTiltCompensatedHeading(alpha: number, beta: number, gamma: number): number {
+  const degToRad = Math.PI / 180;
+  const _radAlpha = alpha * degToRad;
+  const _radBeta = beta * degToRad;
+  const _radGamma = gamma * degToRad;
+
+  const cA = Math.cos(_radAlpha);
+  const sA = Math.sin(_radAlpha);
+  const cB = Math.cos(_radBeta);
+  const sB = Math.sin(_radBeta);
+  const cG = Math.cos(_radGamma);
+  const sG = Math.sin(_radGamma);
+
+  // Calculate tilt-compensated magnetic vector components
+  const Vx = -cA * sG - sA * sB * cG;
+  const Vy = sA * sG - cA * sB * cG;
+
+  let heading = Math.atan2(Vx, Vy) * (180 / Math.PI);
+  if (heading < 0) heading += 360;
+
+  return heading;
+}
+
 export default function CompassTool() {
   const [heading, setHeading] = useState(0);
-  const [pitch, setPitch] = useState(0); // beta (-180 to 180)
-  const [roll, setRoll] = useState(0); // gamma (-90 to 90)
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
   const [northMode, setNorthMode] = useState<'magnetic' | 'true'>('magnetic');
   const [declination, setDeclination] = useState(0);
-  const [permission, setPermission] = useState<'granted' | 'denied' | 'not-supported' | 'checking'>('checking');
-  const [hasSensorData, setHasSensorData] = useState(false);
-  const [sensorQuality, setSensorQuality] = useState<'high' | 'medium' | 'low'>('high');
-  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number; alt: number | null; accuracy: number } | null>(null);
-  const [geoStatus, setGeoStatus] = useState<'disabled' | 'loading' | 'active' | 'error'>('loading');
+  const [sensorState, setSensorState] = useState<'active' | 'denied' | 'unsupported' | 'calibrating'>('calibrating');
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [simulationMode, setSimulationMode] = useState(false);
 
   const prevCardinalRef = useRef<string>('');
-  const rawHeadingRef = useRef<number>(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastHeadingRef = useRef<number>(0);
+  const continuousRotationRef = useRef<number>(0);
 
-  // Exponential low-pass filter for smooth motion
-  const smoothHeading = (target: number) => {
-    let current = rawHeadingRef.current;
-    let diff = (target - current + 540) % 360 - 180;
-    // Smoother interpolation factor (0.28)
-    let next = (current + diff * 0.28 + 360) % 360;
-    rawHeadingRef.current = next;
-    return Math.round(next);
-  };
+  // Continuous angle unwrapping filter to prevent 0°/360° spin flips
+  const unwrapSmoothAngle = useCallback((targetDeg: number) => {
+    let currentContinuous = continuousRotationRef.current;
+    let currentMod = ((currentContinuous % 360) + 360) % 360;
 
-  // Auto-fetch GPS coordinates on mount to calculate True North & declination
+    let diff = targetDeg - currentMod;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    // Smooth low-pass interpolation (alpha = 0.25)
+    let nextContinuous = currentContinuous + diff * 0.25;
+    continuousRotationRef.current = nextContinuous;
+
+    let normalized = ((nextContinuous % 360) + 360) % 360;
+    lastHeadingRef.current = normalized;
+    return Math.round(normalized);
+  }, []);
+
+  // Fetch Geolocation to calculate Magnetic Declination for True North
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setGeoStatus('error');
-      return;
-    }
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const dec = getMagneticDeclination(lat, lng);
         setDeclination(dec);
-        setGeoCoords({
-          lat,
-          lng,
-          alt: pos.coords.altitude,
-          accuracy: Math.round(pos.coords.accuracy),
-        });
-        setGeoStatus('active');
+        setGeoCoords({ lat, lng, accuracy: Math.round(pos.coords.accuracy) });
       },
-      () => {
-        setGeoStatus('error');
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
+      () => {},
+      { enableHighAccuracy: true, timeout: 6000 }
     );
   }, []);
 
+  // Set up device orientation listeners
   useEffect(() => {
-    if (!window.DeviceOrientationEvent && !('AbsoluteOrientationSensor' in window)) {
-      setPermission('not-supported');
-      setSimulationMode(true);
-      return;
-    }
-
-    let absoluteSensorInstance: any = null;
-
-    // 1. Web Sensor API: AbsoluteOrientationSensor (Modern Android Chrome / WebViews)
-    if ('AbsoluteOrientationSensor' in window) {
-      try {
-        const AbsoluteOrientationSensorAny = (window as any).AbsoluteOrientationSensor;
-        absoluteSensorInstance = new AbsoluteOrientationSensorAny({ frequency: 60 });
-        
-        absoluteSensorInstance.addEventListener('reading', () => {
-          const q = absoluteSensorInstance.quaternion;
-          if (q) {
-            // Convert quaternion to Euler yaw (heading angle)
-            const [x, y, z, w] = q;
-            const yaw = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
-            let rawHeading = (yaw * (180 / Math.PI) + 360) % 360;
-
-            // Apply screen orientation angle
-            let screenAngle = 0;
-            if (window.screen && window.screen.orientation) {
-              screenAngle = window.screen.orientation.angle;
-            } else if (window.orientation !== undefined) {
-              screenAngle = typeof window.orientation === 'number' ? window.orientation : parseInt(window.orientation as any);
-            }
-
-            rawHeading = (rawHeading + screenAngle) % 360;
-            setHasSensorData(true);
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-            // Compute magnetic vs true heading
-            let finalHeading = rawHeading;
-            if (northMode === 'true' && declination !== 0) {
-              finalHeading = (finalHeading + declination + 360) % 360;
-            }
-
-            const smoothed = smoothHeading(finalHeading);
-            setHeading(smoothed);
-
-            const dir = getCardinal(smoothed);
-            if (dir !== prevCardinalRef.current && (dir === 'N' || dir === 'E' || dir === 'S' || dir === 'W')) {
-              haptics.light();
-              prevCardinalRef.current = dir;
-            }
-          }
-        });
-
-        absoluteSensorInstance.addEventListener('error', (err: any) => {
-          if (err.error.name === 'NotAllowedError') {
-            setPermission('denied');
-          }
-        });
-
-        absoluteSensorInstance.start();
-        setPermission('granted');
-      } catch {
-        // Fallback to standard DeviceOrientation below
+    let hasEventFired = false;
+    const timeoutTimer = setTimeout(() => {
+      if (!hasEventFired) {
+        setSensorState('unsupported');
+        setSimulationMode(true);
       }
-    }
+    }, 2000);
 
-    // 2. Standard DeviceOrientationEvent fallback handler
-    const handleOrientation = (e: DeviceOrientationEvent & { webkitCompassHeading?: number; absolute?: boolean }) => {
-      let compassHeading: number | null = null;
+    const handleOrientation = (e: any) => {
+      hasEventFired = true;
+      let rawHeading: number | null = null;
 
-      // iOS Safari webkitCompassHeading
+      // 1. iOS Safari native webkitCompassHeading (Already screen-aligned & tilt-compensated)
       if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) {
-        compassHeading = e.webkitCompassHeading;
+        rawHeading = e.webkitCompassHeading;
       }
-      // Standard W3C DeviceOrientation (alpha angle)
+      // 2. Standard W3C DeviceOrientation (alpha, beta, gamma)
       else if (e.alpha !== null && e.alpha !== undefined) {
-        compassHeading = (360 - e.alpha) % 360;
-      }
+        const a = e.alpha;
+        const b = e.beta || 0;
+        const g = e.gamma || 0;
 
-      if (compassHeading !== null) {
-        setHasSensorData(true);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        // Use 3D tilt compensation if phone is tilted
+        if (Math.abs(b) > 10 || Math.abs(g) > 10) {
+          rawHeading = computeTiltCompensatedHeading(a, b, g);
+        } else {
+          rawHeading = (360 - a) % 360;
+        }
 
+        // Apply screen orientation angle only for W3C alpha
         let screenAngle = 0;
         if (window.screen && window.screen.orientation) {
           screenAngle = window.screen.orientation.angle;
         } else if (window.orientation !== undefined) {
-          screenAngle = typeof window.orientation === 'number' ? window.orientation : parseInt(window.orientation as any);
+          screenAngle = Number(window.orientation) || 0;
         }
+        rawHeading = (rawHeading + screenAngle) % 360;
+      }
 
-        compassHeading = (compassHeading + screenAngle) % 360;
+      if (rawHeading !== null) {
+        setSensorState('active');
+        clearTimeout(timeoutTimer);
 
         // Apply True North declination if selected
         if (northMode === 'true' && declination !== 0) {
-          compassHeading = (compassHeading + declination + 360) % 360;
+          rawHeading = (rawHeading + declination + 360) % 360;
         }
 
-        const smoothed = smoothHeading(compassHeading);
-        setHeading(smoothed);
+        const finalHeading = unwrapSmoothAngle(rawHeading);
+        setHeading(finalHeading);
 
-        const dir = getCardinal(smoothed);
-        if (dir !== prevCardinalRef.current && (dir === 'N' || dir === 'E' || dir === 'S' || dir === 'W')) {
+        const dir = getCardinal(finalHeading);
+        if (dir !== prevCardinalRef.current && ['N', 'E', 'S', 'W'].includes(dir)) {
           haptics.light();
           prevCardinalRef.current = dir;
         }
@@ -178,47 +149,38 @@ export default function CompassTool() {
       if (e.gamma !== null) setRoll(Math.round(e.gamma));
     };
 
-    // Timeout detector: enable simulator if no sensor events fire within 1.5 seconds
-    timeoutRef.current = setTimeout(() => {
-      if (!hasSensorData) {
-        setSimulationMode(true);
-      }
-    }, 1500);
-
-    const isAbsoluteSupported = 'ondeviceorientationabsolute' in window;
-    const eventName = isAbsoluteSupported ? 'deviceorientationabsolute' : 'deviceorientation';
-
-    const requestPermission = async () => {
-      const DeviceOrientationEventAny = window.DeviceOrientationEvent as any;
-      if (typeof DeviceOrientationEventAny.requestPermission === 'function') {
+    // Permission request for iOS 13+
+    const startSensors = async () => {
+      const DeviceEvt = window.DeviceOrientationEvent as any;
+      if (DeviceEvt && typeof DeviceEvt.requestPermission === 'function') {
         try {
-          const res = await DeviceOrientationEventAny.requestPermission();
-          if (res === 'granted') {
+          const perm = await DeviceEvt.requestPermission();
+          if (perm === 'granted') {
             window.addEventListener('deviceorientation', handleOrientation, true);
-            setPermission('granted');
+            setSensorState('active');
           } else {
-            setPermission('denied');
+            setSensorState('denied');
             setSimulationMode(true);
           }
         } catch {
-          setPermission('denied');
+          setSensorState('denied');
           setSimulationMode(true);
         }
       } else {
-        window.addEventListener(eventName, handleOrientation as EventListener, true);
-        setPermission('granted');
+        const isAbsolute = 'ondeviceorientationabsolute' in window;
+        const evtName = isAbsolute ? 'deviceorientationabsolute' : 'deviceorientation';
+        window.addEventListener(evtName, handleOrientation, true);
       }
     };
 
-    requestPermission();
+    startSensors();
 
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (absoluteSensorInstance) absoluteSensorInstance.stop();
-      window.removeEventListener('deviceorientation', handleOrientation as EventListener, true);
-      window.removeEventListener('deviceorientationabsolute', handleOrientation as EventListener, true);
+      clearTimeout(timeoutTimer);
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('deviceorientationabsolute', handleOrientation, true);
     };
-  }, [northMode, declination]);
+  }, [northMode, declination, unwrapSmoothAngle]);
 
   const getCardinal = (deg: number) => {
     if (deg >= 337.5 || deg < 22.5) return 'N';
@@ -232,7 +194,6 @@ export default function CompassTool() {
   };
 
   const getDirectionFull = (deg: number) => {
-    const card = getCardinal(deg);
     const names: Record<string, string> = {
       N: 'North',
       NE: 'North-East',
@@ -243,7 +204,7 @@ export default function CompassTool() {
       W: 'West',
       NW: 'North-West',
     };
-    return names[card] || card;
+    return names[getCardinal(deg)] || 'North';
   };
 
   const isTilted = Math.abs(pitch) > 30 || Math.abs(roll) > 30;
@@ -254,13 +215,16 @@ export default function CompassTool() {
     <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" className="overflow-hidden">
       <PageHeader
         title="Compass"
-        subtitle="Auto-calibrated mobile magnetic & true direction"
+        subtitle="High-precision digital compass with tilt compensation"
         action={
           <button
-            onClick={() => setSimulationMode((prev) => !prev)}
-            className={`rounded-full p-2 text-xs font-semibold transition-colors flex items-center gap-1.5 px-3 py-1.5 border ${
+            onClick={() => {
+              haptics.light();
+              setSimulationMode((prev) => !prev);
+            }}
+            className={`rounded-full p-2 text-xs font-semibold transition-all flex items-center gap-1.5 px-3 py-1.5 border ${
               simulationMode
-                ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)] shadow-md'
                 : 'border-[var(--color-line)] text-[var(--color-text-muted)] bg-[var(--color-surface)]'
             }`}
           >
@@ -271,17 +235,15 @@ export default function CompassTool() {
       />
 
       <div className="space-y-5 px-4 pb-28 pt-3 flex flex-col items-center max-w-md mx-auto">
-        {/* Mode Selector: Magnetic North vs True Geographic North */}
-        <div className="w-full grid grid-cols-2 gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1.5">
+        {/* Mode Selector */}
+        <div className="w-full grid grid-cols-2 gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1.5 border border-[var(--color-line)]">
           <button
             onClick={() => {
               haptics.light();
               setNorthMode('magnetic');
             }}
             className={`rounded-xl py-2 text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              northMode === 'magnetic'
-                ? 'bg-[var(--color-accent)] text-white shadow-sm'
-                : 'text-[var(--color-text-muted)]'
+              northMode === 'magnetic' ? 'bg-[var(--color-accent)] text-white shadow-sm' : 'text-[var(--color-text-muted)]'
             }`}
           >
             <CompassIcon size={14} />
@@ -293,9 +255,7 @@ export default function CompassTool() {
               setNorthMode('true');
             }}
             className={`rounded-xl py-2 text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-              northMode === 'true'
-                ? 'bg-[var(--color-accent)] text-white shadow-sm'
-                : 'text-[var(--color-text-muted)]'
+              northMode === 'true' ? 'bg-[var(--color-accent)] text-white shadow-sm' : 'text-[var(--color-text-muted)]'
             }`}
           >
             <Navigation size={14} />
@@ -303,27 +263,25 @@ export default function CompassTool() {
           </button>
         </div>
 
-        {/* Calibration & Sensor Notices */}
-        {permission === 'not-supported' && !simulationMode && (
-          <div className="w-full rounded-2xl bg-[var(--color-surface)] border border-[var(--color-line)] p-4 flex gap-3 text-sm">
-            <AlertCircle className="shrink-0 text-amber-400 mt-0.5" size={18} />
-            <p className="text-[var(--color-text-muted)] leading-relaxed">
-              Hardware magnetometer missing or restricted on this device. Manual interactive mode activated.
-            </p>
+        {/* Calibration Alerts */}
+        {sensorState === 'unsupported' && !simulationMode && (
+          <div className="w-full rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3.5 flex gap-3 text-xs text-amber-400">
+            <AlertCircle className="shrink-0 mt-0.5" size={16} />
+            <span>Magnetometer sensor not detected. Switched to manual interactive control mode.</span>
           </div>
         )}
 
         {isTilted && !simulationMode && (
           <div className="w-full rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 flex gap-2.5 items-center text-xs text-amber-400">
             <AlertCircle className="shrink-0" size={16} />
-            <span>Hold phone flat on your palm for highest accuracy.</span>
+            <span>Hold phone flat on your palm for highest orientation accuracy.</span>
           </div>
         )}
 
-        {/* Heading Readout */}
+        {/* Heading Readout Header */}
         <div className="text-center space-y-0.5">
           <div className="flex items-baseline justify-center gap-2">
-            <span className="text-6xl font-extrabold font-display tracking-tight text-[var(--color-text)] tabular-nums">
+            <span className="text-6xl font-extrabold font-mono tracking-tight text-[var(--color-text)] tabular-nums">
               {heading}°
             </span>
             <span className="text-2xl font-extrabold text-[var(--color-accent)]">
@@ -333,28 +291,33 @@ export default function CompassTool() {
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)] flex items-center justify-center gap-1.5">
             <span>{getDirectionFull(heading)}</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-line)] font-semibold text-[var(--color-accent)]">
-              {northMode === 'true' ? 'True North' : 'Magnetic'}
+              {northMode === 'true' ? 'True Geographic' : 'Magnetic'}
             </span>
           </p>
         </div>
 
-        {/* Main Compass Dial */}
+        {/* Digital Compass Dial */}
         <div className="relative w-72 h-72 rounded-full bg-[var(--color-surface)] border-4 border-[var(--color-line)] flex items-center justify-center shadow-2xl overflow-hidden">
-          <div className="absolute inset-1 rounded-full border border-[var(--color-line)]/50 pointer-events-none" />
+          <div className="absolute inset-1.5 rounded-full border border-[var(--color-line)]/40 pointer-events-none" />
 
-          {/* Rotating Compass Face */}
+          {/* Top Facing Pointer (12 o'clock) */}
+          <div className="absolute top-1 z-30 flex flex-col items-center">
+            <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[16px] border-t-[var(--color-accent)] filter drop-shadow-md" />
+          </div>
+
+          {/* Rotating Compass Face Card */}
           <motion.div
             animate={{ rotate: -heading }}
-            transition={{ type: 'spring', stiffness: 95, damping: 19 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
             className="w-full h-full relative"
           >
-            {/* Degree Tick Marks */}
+            {/* Degree Ticks */}
             {Array.from({ length: 12 }).map((_, i) => {
               const deg = i * 30;
               return (
                 <div
                   key={deg}
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none flex flex-col justify-between items-center py-2"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none flex flex-col justify-between items-center py-2.5"
                   style={{ transform: `rotate(${deg}deg)` }}
                 >
                   <div className={`w-0.5 ${deg % 90 === 0 ? 'h-3 bg-[var(--color-text)]' : 'h-2 bg-[var(--color-text-muted)]/40'}`} />
@@ -362,17 +325,17 @@ export default function CompassTool() {
               );
             })}
 
-            {/* Main Cardinal Labels */}
-            <span className="absolute top-4 left-1/2 -translate-x-1/2 font-display font-black text-lg text-[var(--color-danger)]">
+            {/* Cardinal Letters */}
+            <span className="absolute top-4 left-1/2 -translate-x-1/2 font-display font-black text-xl text-[var(--color-danger)]">
               N
             </span>
-            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-display font-black text-lg text-[var(--color-text)]">
+            <span className="absolute bottom-4 left-1/2 -translate-x-1/2 font-display font-black text-xl text-[var(--color-text)]">
               S
             </span>
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-display font-black text-lg text-[var(--color-text)]">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 font-display font-black text-xl text-[var(--color-text)]">
               E
             </span>
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-display font-black text-lg text-[var(--color-text)]">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-display font-black text-xl text-[var(--color-text)]">
               W
             </span>
 
@@ -381,23 +344,26 @@ export default function CompassTool() {
             <span className="absolute bottom-10 right-10 font-display font-bold text-xs text-[var(--color-text-muted)]">SE</span>
             <span className="absolute bottom-10 left-10 font-display font-bold text-xs text-[var(--color-text-muted)]">SW</span>
             <span className="absolute top-10 left-10 font-display font-bold text-xs text-[var(--color-text-muted)]">NW</span>
-
-            {/* Needle graphic */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="absolute top-12 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[60px] border-b-[var(--color-danger)] filter drop-shadow-md" />
-              <div className="absolute bottom-12 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[60px] border-t-[var(--color-text-muted)]/70 filter drop-shadow-md" />
-            </div>
           </motion.div>
 
-          {/* Heading Marker at 12 o'clock */}
-          <div className="absolute top-1 z-20 flex flex-col items-center">
-            <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[14px] border-t-[var(--color-accent)] filter drop-shadow" />
+          {/* Fixed Needle Pointer Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <motion.div
+              animate={{ rotate: -heading }}
+              transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+              className="w-full h-full relative flex items-center justify-center"
+            >
+              {/* Red North Arrow */}
+              <div className="absolute top-12 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[65px] border-b-[var(--color-danger)] filter drop-shadow-md" />
+              {/* Silver South Arrow */}
+              <div className="absolute bottom-12 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[65px] border-t-[var(--color-text-muted)]/60 filter drop-shadow-md" />
+            </motion.div>
           </div>
 
-          {/* Center Bubble Level */}
-          <div className="absolute z-10 w-10 h-10 rounded-full bg-[var(--color-surface)] border border-[var(--color-line)] shadow-inner flex items-center justify-center pointer-events-none">
+          {/* Center Bubble Level Indicator */}
+          <div className="absolute z-20 w-11 h-11 rounded-full bg-[var(--color-surface)] border border-[var(--color-line)] shadow-inner flex items-center justify-center pointer-events-none">
             <div
-              className="w-3.5 h-3.5 rounded-full bg-[var(--color-accent)]/80 transition-transform duration-75 shadow-sm"
+              className="w-3.5 h-3.5 rounded-full bg-[var(--color-accent)] shadow-sm transition-transform duration-75"
               style={{ transform: `translate(${bubbleX}px, ${bubbleY}px)` }}
             />
           </div>
@@ -409,9 +375,9 @@ export default function CompassTool() {
             <div className="flex justify-between items-center text-xs font-semibold text-[var(--color-text-muted)]">
               <span className="flex items-center gap-1.5">
                 <Navigation size={14} className="text-[var(--color-accent)]" />
-                Manual Direction Simulator
+                Manual Interactive Heading Slider
               </span>
-              <span className="font-mono text-[var(--color-text)]">{heading}°</span>
+              <span className="font-mono font-bold text-[var(--color-text)]">{heading}°</span>
             </div>
             <input
               type="range"
@@ -428,12 +394,12 @@ export default function CompassTool() {
           </div>
         )}
 
-        {/* GPS Location & Magnetic Declination Card */}
+        {/* Location & Sensor Info Box */}
         <div className="w-full rounded-2xl bg-[var(--color-surface)] border border-[var(--color-line)] p-4 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
               <MapPin size={15} className="text-[var(--color-accent)]" />
-              <span>Mobile Location & Sensors</span>
+              <span>Location & Calibration</span>
             </div>
             <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
               <ShieldCheck size={14} />
@@ -442,7 +408,7 @@ export default function CompassTool() {
           </div>
 
           {geoCoords ? (
-            <div className="grid grid-cols-2 gap-2.5 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-[var(--color-surface-2)] p-2.5 rounded-xl">
                 <span className="text-[10px] font-medium text-[var(--color-text-muted)] block">Latitude</span>
                 <span className="font-mono font-bold text-[var(--color-text)]">{geoCoords.lat.toFixed(4)}°</span>
@@ -452,7 +418,7 @@ export default function CompassTool() {
                 <span className="font-mono font-bold text-[var(--color-text)]">{geoCoords.lng.toFixed(4)}°</span>
               </div>
               <div className="bg-[var(--color-surface-2)] p-2.5 rounded-xl">
-                <span className="text-[10px] font-medium text-[var(--color-text-muted)] block">Magnetic Declination</span>
+                <span className="text-[10px] font-medium text-[var(--color-text-muted)] block">Declination Offset</span>
                 <span className="font-mono font-bold text-[var(--color-accent)]">{declination > 0 ? `+${declination}` : declination}°</span>
               </div>
               <div className="bg-[var(--color-surface-2)] p-2.5 rounded-xl">
