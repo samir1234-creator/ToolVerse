@@ -12,16 +12,34 @@ import CategoryDetail from '@/pages/CategoryDetail';
 import Favorites from '@/pages/Favorites';
 import Settings from '@/pages/Settings';
 import SearchPage from '@/pages/Search';
-import CalculatorPage from '@/pages/calculators/CalculatorPage';
-import BasicCalculator from '@/pages/calculators/BasicCalculator';
-import ScientificCalculator from '@/pages/calculators/ScientificCalculator';
-import CoinFlipTool from '@/pages/calculators/CoinFlipTool';
-import DiceRollerTool from '@/pages/calculators/DiceRollerTool';
-import CompassTool from '@/pages/calculators/CompassTool';
-import ConverterPage from '@/pages/converters/ConverterPage';
-import DevToolPage from '@/pages/devtools/DevToolPage';
-import TextToolsPage from '@/pages/texttools/TextToolsPage';
-import MorseCodeTool from '@/pages/texttools/MorseCodeTool';
+import {
+  BasicCalculatorTool,
+  ScientificCalculatorTool,
+  CoinFlipTool,
+  DiceRollerTool,
+  CompassTool,
+  FormulaCalculatorTool,
+  UnitConverterTool,
+  DevToolsRunner,
+  TextToolsRunner,
+  MorseCodeTool,
+  CurrencyConverterTool,
+  CryptoTrackerTool,
+  UnitPriceTool,
+  LoanPayoffTool,
+  Rule72Tool,
+  StopwatchTool,
+  LoanComparisonTool,
+  SalaryToHourlyTool,
+  FuelTripCostTool,
+  PercentageChangeTool,
+  SalesTaxCalculatorTool,
+  AgeDifferenceTool,
+  BodyFatCalculatorTool,
+  TimeDurationTool,
+  LoremIpsumTool,
+  TextCleanerTool,
+} from '@/tools';
 import { useHardwareBackButton } from '@/hooks/useHardwareBackButton';
 
 function AnimatedRoutes() {
@@ -37,16 +55,38 @@ function AnimatedRoutes() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/calculator/basic" element={<BasicCalculator />} />
-        <Route path="/calculator/scientific" element={<ScientificCalculator />} />
+
+        {/* Dedicated Calculator Routes */}
+        <Route path="/calculator/basic" element={<BasicCalculatorTool />} />
+        <Route path="/calculator/scientific" element={<ScientificCalculatorTool />} />
         <Route path="/calculator/coin-flip" element={<CoinFlipTool />} />
         <Route path="/calculator/dice-roller" element={<DiceRollerTool />} />
         <Route path="/calculator/compass" element={<CompassTool />} />
-        <Route path="/calculator/:id" element={<CalculatorPage />} />
-        <Route path="/converter/:categoryId" element={<ConverterPage />} />
-        <Route path="/devtool/:id" element={<DevToolPage />} />
+        <Route path="/calculator/currency" element={<CurrencyConverterTool />} />
+        <Route path="/calculator/crypto" element={<CryptoTrackerTool />} />
+        <Route path="/calculator/unit-price" element={<UnitPriceTool />} />
+        <Route path="/calculator/loan-payoff" element={<LoanPayoffTool />} />
+        <Route path="/calculator/rule-of-72" element={<Rule72Tool />} />
+        <Route path="/calculator/stopwatch" element={<StopwatchTool />} />
+        <Route path="/calculator/loan-comparison" element={<LoanComparisonTool />} />
+        <Route path="/calculator/salary-hourly" element={<SalaryToHourlyTool />} />
+        <Route path="/calculator/fuel-trip-cost" element={<FuelTripCostTool />} />
+        <Route path="/calculator/percentage-change" element={<PercentageChangeTool />} />
+        <Route path="/calculator/sales-tax" element={<SalesTaxCalculatorTool />} />
+        <Route path="/calculator/age-difference" element={<AgeDifferenceTool />} />
+        <Route path="/calculator/body-fat" element={<BodyFatCalculatorTool />} />
+        <Route path="/calculator/time-duration" element={<TimeDurationTool />} />
+        <Route path="/calculator/:id" element={<FormulaCalculatorTool />} />
+
+        {/* Converters & DevTools */}
+        <Route path="/converter/:categoryId" element={<UnitConverterTool />} />
+        <Route path="/devtool/:id" element={<DevToolsRunner />} />
+
+        {/* Text Tools */}
         <Route path="/texttool/morse-code" element={<MorseCodeTool />} />
-        <Route path="/texttool/:id" element={<TextToolsPage />} />
+        <Route path="/texttool/lorem-ipsum" element={<LoremIpsumTool />} />
+        <Route path="/texttool/text-cleaner" element={<TextCleanerTool />} />
+        <Route path="/texttool/:id" element={<TextToolsRunner />} />
       </Routes>
     </AnimatePresence>
   );

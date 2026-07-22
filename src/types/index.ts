@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type CategoryId = 'calculators' | 'converters' | 'devtools' | 'texttools';
+export type CategoryId = 'calculators' | 'finance' | 'health' | 'converters' | 'devtools' | 'texttools';
 
 export type FieldType = 'number' | 'select' | 'date' | 'text';
 

@@ -49,9 +49,8 @@ function getVariant(key: string): 'default' | 'operator' | 'accent' | 'muted' {
   return 'default';
 }
 
-/** Auto-shrink font size so long numbers never overflow — no truncation dots */
 function getResultFontSize(text: string): string {
-  const len = text.replace(/[,. ]/g, '').length; // count real digits
+  const len = text.replace(/[,. ]/g, '').length;
   if (len <= 7)  return '2.6rem';
   if (len <= 10) return '2rem';
   if (len <= 14) return '1.55rem';
@@ -59,7 +58,7 @@ function getResultFontSize(text: string): string {
   return '0.95rem';
 }
 
-export default function BasicCalculator() {
+export default function BasicCalculatorTool() {
   const [expr, setExpr] = useState('');
   const navigate = useNavigate();
   const addHistory = useAppStore((s) => s.addHistory);
@@ -74,11 +73,10 @@ export default function BasicCalculator() {
     ? preview.toLocaleString('en-IN', { maximumFractionDigits: 8 })
     : null;
 
-  // Indian words — only for finite integers within range
   const inWords = useMemo(() => {
     if (preview === null) return null;
     if (!isFinite(preview)) return null;
-    if (Math.abs(preview) > 9_999_999_999_999) return null; // too large
+    if (Math.abs(preview) > 9_999_999_999_999) return null;
     return numberToIndianWords(preview);
   }, [preview]);
 
@@ -117,17 +115,14 @@ export default function BasicCalculator() {
         <div className="w-9" />
       </div>
 
-      {/* ── Display + Words — single fixed box, nothing outside ever changes size ── */}
       <div
         className="calc-display mx-4 mt-3 mb-3 flex flex-col justify-end overflow-hidden rounded-3xl px-5 pt-4 pb-3 text-right"
         style={{ height: '10rem', minHeight: '10rem', maxHeight: '10rem' }}
       >
-        {/* Expression */}
         <p className="font-mono text-sm text-[var(--color-text-muted)] opacity-70 break-all leading-snug">
           {expr || '0'}
         </p>
 
-        {/* Result — auto-shrinking */}
         <AnimatePresence mode="popLayout">
           <motion.p
             key={formattedPreview ?? '__empty__'}
@@ -146,7 +141,6 @@ export default function BasicCalculator() {
           </motion.p>
         </AnimatePresence>
 
-        {/* Indian words — always occupies fixed space at bottom of panel */}
         <div className="h-8 flex items-end justify-end mt-1 overflow-hidden">
           <AnimatePresence mode="wait">
             {inWords && (
@@ -166,7 +160,6 @@ export default function BasicCalculator() {
         </div>
       </div>
 
-      {/* ── Keypad — all circles ──────────────────── */}
       <motion.div
         variants={keypadContainer}
         initial="initial"

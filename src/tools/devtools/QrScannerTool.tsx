@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Scan, Upload, Copy, ExternalLink, RefreshCw } from 'lucide-react';
+import { Scan, Copy, ExternalLink, RefreshCw } from 'lucide-react';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
 import { snackbar } from '@/components/ui/Snackbar';
@@ -86,7 +86,7 @@ export default function QrScannerTool() {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] mb-4">
                 <Scan size={32} />
               </div>
-              <p className="text-sm font-semibold text-[var(--color-text)]">Choose QR Code image</p>
+              <p className="text-sm font-semibold text-[var(--color-text)] font-display">Choose QR Code image</p>
               <p className="text-xs text-[var(--color-text-muted)] mt-1">Supports camera capture & upload</p>
             </label>
           ) : (

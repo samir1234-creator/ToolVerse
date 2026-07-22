@@ -13,7 +13,7 @@ import { useAppStore } from '@/hooks/useAppStore';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
 
-export default function CalculatorPage() {
+export default function FormulaCalculatorTool() {
   const { id = '' } = useParams();
   const definition = calculatorDefinitions[id];
   const tool = getToolById(id);

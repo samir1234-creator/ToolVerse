@@ -36,16 +36,12 @@ export default function GradientGeneratorTool() {
         }
       />
       <div className="space-y-5 px-4 pb-28 pt-5">
-        
-        {/* Live Preview */}
         <div
           className="w-full h-40 rounded-3xl border border-[var(--color-line)] relative flex items-end p-4 shadow-inner"
           style={{ background: gradientString }}
         />
 
-        {/* Inputs */}
         <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 space-y-4">
-          {/* Gradient Type */}
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1">
             {(['linear', 'radial'] as const).map((t) => (
               <button

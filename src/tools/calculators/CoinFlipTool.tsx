@@ -19,8 +19,7 @@ export default function CoinFlipTool() {
     const isHeads = Math.random() < 0.5;
     const finalResult = isHeads ? 'heads' : 'tails';
 
-    // Premium 3D spin animation (rotateX, Y, and scale bounce)
-    const spinRotations = 1080 + (isHeads ? 0 : 180); // odd number of 180s flips it to the other side
+    const spinRotations = 1080 + (isHeads ? 0 : 180);
     
     await controls.start({
       rotateY: spinRotations,
@@ -57,8 +56,6 @@ export default function CoinFlipTool() {
         }
       />
       <div className="space-y-6 px-4 pb-28 pt-5 flex flex-col items-center">
-        
-        {/* The 3D Spinning Coin Container */}
         <div className="relative w-48 h-48 flex items-center justify-center perspective-1000 mt-5">
           <motion.div
             animate={controls}
@@ -66,7 +63,6 @@ export default function CoinFlipTool() {
             style={{ transformStyle: 'preserve-3d' }}
             onClick={handleFlip}
           >
-            {/* Front side (Heads) */}
             <div
               className="absolute inset-0 rounded-full flex flex-col items-center justify-center border-4 border-amber-300 backface-hidden"
               style={{
@@ -79,7 +75,6 @@ export default function CoinFlipTool() {
               <span className="text-sm font-extrabold text-amber-100 uppercase tracking-widest mt-1">Heads</span>
             </div>
 
-            {/* Back side (Tails) */}
             <div
               className="absolute inset-0 rounded-full flex flex-col items-center justify-center border-4 border-amber-400"
               style={{
@@ -95,7 +90,6 @@ export default function CoinFlipTool() {
           </motion.div>
         </div>
 
-        {/* Flip Trigger Button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleFlip}
@@ -105,7 +99,6 @@ export default function CoinFlipTool() {
           {flipping ? 'Flipping...' : 'Flip Coin'}
         </motion.button>
 
-        {/* Statistics block */}
         <div className="w-full grid grid-cols-3 gap-3 mt-4 text-center">
           <div className="rounded-2xl bg-[var(--color-surface)] p-3 border border-[var(--color-line)]">
             <span className="text-xs text-[var(--color-text-muted)] block">Heads</span>
@@ -120,7 +113,6 @@ export default function CoinFlipTool() {
             <span className="font-mono text-xl font-bold text-[var(--color-text)] mt-1 block">{stats.total}</span>
           </div>
         </div>
-
       </div>
     </motion.div>
   );

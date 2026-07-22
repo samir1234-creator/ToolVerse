@@ -19,6 +19,14 @@ import JsonFormatterTool from './JsonFormatterTool';
 import DeviceInfoTool from './DeviceInfoTool';
 import BatteryInfoTool from './BatteryInfoTool';
 import GradientGeneratorTool from './GradientGeneratorTool';
+import JwtDecoderTool from './JwtDecoderTool';
+import RegexTesterTool from './RegexTesterTool';
+import MarkdownPreviewerTool from './MarkdownPreviewerTool';
+import DiffCheckerTool from './DiffCheckerTool';
+import HtmlEntityTool from './HtmlEntityTool';
+import CssBoxShadowTool from './CssBoxShadowTool';
+import PxToRemTool from './PxToRemTool';
+import AspectRatioTool from './AspectRatioTool';
 
 const registry: Record<string, React.ComponentType> = {
   base64: Base64Tool,
@@ -38,9 +46,17 @@ const registry: Record<string, React.ComponentType> = {
   'device-info': DeviceInfoTool,
   'battery-info': BatteryInfoTool,
   'gradient-generator': GradientGeneratorTool,
+  'jwt-decoder': JwtDecoderTool,
+  'regex-tester': RegexTesterTool,
+  'markdown-preview': MarkdownPreviewerTool,
+  'diff-checker': DiffCheckerTool,
+  'html-entity': HtmlEntityTool,
+  'box-shadow': CssBoxShadowTool,
+  'px-to-rem': PxToRemTool,
+  'aspect-ratio': AspectRatioTool,
 };
 
-export default function DevToolPage() {
+export default function DevToolsRunner() {
   const { id = '' } = useParams();
   const Tool = registry[id];
   if (!Tool) {

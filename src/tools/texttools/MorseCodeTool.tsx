@@ -42,7 +42,6 @@ export default function MorseCodeTool() {
     }
   }, [input, mode]);
 
-  // Audio Player using Web Audio API
   const playSound = async () => {
     if (playing || !output) return;
     setPlaying(true);
@@ -50,7 +49,7 @@ export default function MorseCodeTool() {
 
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const dotDuration = 0.08; // dot length in seconds
+      const dotDuration = 0.08;
       const dashDuration = dotDuration * 3;
       const intraCharSpace = dotDuration;
       const interCharSpace = dotDuration * 3;
@@ -64,7 +63,7 @@ export default function MorseCodeTool() {
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
 
-        osc.frequency.setValueAtTime(700, timeOffset); // 700Hz pitch
+        osc.frequency.setValueAtTime(700, timeOffset);
         gainNode.gain.setValueAtTime(0, timeOffset);
         gainNode.gain.linearRampToValueAtTime(0.3, timeOffset + 0.005);
         gainNode.gain.setValueAtTime(0.3, timeOffset + duration - 0.005);
@@ -90,7 +89,6 @@ export default function MorseCodeTool() {
         timeOffset += interCharSpace;
       }
 
-      // Keep playing state active until audio queues finish
       const totalTimeMs = (timeOffset - audioCtx.currentTime) * 1000;
       setTimeout(() => {
         setPlaying(false);

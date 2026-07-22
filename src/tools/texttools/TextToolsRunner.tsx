@@ -11,7 +11,7 @@ import { getToolById } from '@/constants/tools';
 function transform(id: string, text: string, caseMode: string) {
   switch (id) {
     case 'character-counter':
-      return null; // handled separately with stats
+      return null;
     case 'word-counter':
       return null;
     case 'reverse-text':
@@ -29,7 +29,7 @@ function transform(id: string, text: string, caseMode: string) {
   }
 }
 
-export default function TextToolsPage() {
+export default function TextToolsRunner() {
   const { id = '' } = useParams();
   const tool = getToolById(id);
   const [text, setText] = useState('');

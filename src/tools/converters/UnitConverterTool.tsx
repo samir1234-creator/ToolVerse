@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, RotateCcw } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { unitCategories, convertValue } from '@/constants/converters';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
-import { RotateCcw } from 'lucide-react';
 
-export default function ConverterPage() {
+export default function UnitConverterTool() {
   const { categoryId = '' } = useParams();
   const category = unitCategories.find((c) => c.id === categoryId);
 

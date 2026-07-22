@@ -39,8 +39,6 @@ export default function JsonFormatterTool() {
     <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
       <PageHeader title="JSON Formatter & Validator" subtitle="Format, validate & clean JSON data" />
       <div className="space-y-4 px-4 pb-28 pt-5">
-        
-        {/* Controls */}
         <div className="flex gap-2 justify-between items-center rounded-2xl bg-[var(--color-surface)] p-3 border border-[var(--color-line)]">
           <div className="flex gap-2">
             <button
@@ -74,7 +72,6 @@ export default function JsonFormatterTool() {
           className="w-full rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4 font-mono text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none"
         />
 
-        {/* Validation indicator */}
         {input.trim() && (
           <div className={`flex items-center gap-2 rounded-2xl p-3.5 border ${parsed.error ? 'bg-[var(--color-danger-soft)]/20 border-[var(--color-danger)]/40 text-[var(--color-danger)]' : 'bg-green-500/10 border-green-500/30 text-green-400'}`}>
             {parsed.error ? (

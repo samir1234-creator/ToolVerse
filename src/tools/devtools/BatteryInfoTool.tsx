@@ -72,7 +72,6 @@ export default function BatteryInfoTool() {
     <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
       <PageHeader title="Battery Information" subtitle="Real-time status of your device battery" />
       <div className="space-y-5 px-4 pb-28 pt-5">
-        
         {!battery.supported ? (
           <div className="rounded-3xl border border-[var(--color-danger)]/30 bg-[var(--color-danger-soft)]/20 p-5 flex items-start gap-3 text-[var(--color-danger)]">
             <AlertTriangle className="shrink-0 mt-0.5" />
@@ -85,19 +84,15 @@ export default function BatteryInfoTool() {
           </div>
         ) : (
           <>
-            {/* Battery graphic widget */}
             <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6 flex flex-col items-center justify-center space-y-5">
               <div className="relative flex items-center justify-center">
-                {/* Horizontal battery body */}
                 <div className="w-32 h-16 border-4 border-[var(--color-text)] rounded-2xl p-1 relative flex items-center">
                   <div
                     className={`h-full rounded-lg transition-all duration-500 ${battery.charging ? 'bg-green-400' : percentage <= 20 ? 'bg-[var(--color-danger)]' : 'bg-[var(--color-accent)]'}`}
                     style={{ width: `${percentage}%` }}
                   />
-                  {/* Battery tip */}
                   <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-2.5 h-6 bg-[var(--color-text)] rounded-r-md" />
                 </div>
-                {/* Charging bolt overlay */}
                 {battery.charging && (
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -127,7 +122,6 @@ export default function BatteryInfoTool() {
               </div>
             </div>
 
-            {/* Battery stats list */}
             <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-[var(--color-line)] pb-2.5">
                 <Info size={16} className="text-[var(--color-accent)]" />

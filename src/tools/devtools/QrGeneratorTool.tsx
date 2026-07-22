@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Download, QrCode } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
 import { snackbar } from '@/components/ui/Snackbar';

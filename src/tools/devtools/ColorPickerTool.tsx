@@ -6,7 +6,6 @@ import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
 import { snackbar } from '@/components/ui/Snackbar';
 
-// Conversion helpers
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
@@ -75,7 +74,6 @@ export default function ColorPickerTool() {
     setColor(rgbToHex(r, g, b));
   };
 
-  // Generate simple color palettes
   const palettes = [
     { name: 'Monochromatic 1', hex: rgbToHex(Math.max(0, rgb.r - 40), Math.max(0, rgb.g - 40), Math.max(0, rgb.b - 40)) },
     { name: 'Base Color', hex: color },
@@ -95,7 +93,6 @@ export default function ColorPickerTool() {
         }
       />
       <div className="space-y-5 px-4 pb-28 pt-5">
-        {/* Visual Preview */}
         <div
           className="w-full h-32 rounded-3xl border border-[var(--color-line)] relative overflow-hidden flex items-end p-4"
           style={{ backgroundColor: color }}
@@ -105,7 +102,6 @@ export default function ColorPickerTool() {
           </div>
         </div>
 
-        {/* Sliders */}
         <div className="rounded-3xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Color Adjusters</span>
@@ -118,7 +114,6 @@ export default function ColorPickerTool() {
           </div>
 
           <div className="space-y-3">
-            {/* Red */}
             <div>
               <div className="flex justify-between text-xs font-semibold mb-1 font-mono">
                 <span className="text-[var(--color-danger)]">Red</span>
@@ -133,7 +128,6 @@ export default function ColorPickerTool() {
                 className="w-full h-1.5 rounded-lg bg-[var(--color-surface-2)] appearance-none cursor-pointer accent-[var(--color-danger)]"
               />
             </div>
-            {/* Green */}
             <div>
               <div className="flex justify-between text-xs font-semibold mb-1 font-mono">
                 <span className="text-[var(--color-accent)]">Green</span>
@@ -148,7 +142,6 @@ export default function ColorPickerTool() {
                 className="w-full h-1.5 rounded-lg bg-[var(--color-surface-2)] appearance-none cursor-pointer accent-[var(--color-accent)]"
               />
             </div>
-            {/* Blue */}
             <div>
               <div className="flex justify-between text-xs font-semibold mb-1 font-mono">
                 <span className="text-indigo-400">Blue</span>
@@ -166,7 +159,6 @@ export default function ColorPickerTool() {
           </div>
         </div>
 
-        {/* Code copies */}
         <div className="grid grid-cols-1 gap-2">
           {[
             ['HEX', color.toUpperCase()],
@@ -187,7 +179,6 @@ export default function ColorPickerTool() {
           ))}
         </div>
 
-        {/* Palette suggestions */}
         <div>
           <h3 className="mb-3 font-display text-sm font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
             Suggested Palette

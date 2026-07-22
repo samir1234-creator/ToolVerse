@@ -1,13 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Download, Barcode } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
 import { snackbar } from '@/components/ui/Snackbar';
 
-// Code 39 mapping (9 elements per char: 5 bars, 4 spaces. 1 = narrow, 2 = wide)
-// b = bar, s = space
 const CODE39_ENCODINGS: Record<string, string> = {
   '0': 'b1s1b1s2b2s1b2s1b1', '1': 'b2s1b1s2b1s1b1s1b2', '2': 'b1s1b2s2b1s1b1s1b2', '3': 'b2s1b2s2b1s1b1s1b1',
   '4': 'b1s1b1s2b2s1b1s1b2', '5': 'b2s1b1s2b2s1b1s1b1', '6': 'b1s1b2s2b2s1b1s1b1', '7': 'b1s1b1s2b1s1b2s1b2',
@@ -35,7 +33,6 @@ export default function BarcodeGeneratorTool() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Validate Code 39 input
     const cleaned = text.toUpperCase();
     const invalidChars = cleaned.split('').filter(char => !CODE39_ENCODINGS[char]);
     if (invalidChars.length > 0) {
@@ -48,37 +45,31 @@ export default function BarcodeGeneratorTool() {
       return;
     }
 
-    // Wrap with start/stop characters
     const fullText = `*${cleaned}*`;
     
-    // Draw config
     const narrowWidth = 2;
     const wideWidth = 5;
     const height = 80;
     const margin = 20;
 
-    // Calculate total width
     let totalWidth = 0;
     for (let char of fullText) {
       const pattern = CODE39_ENCODINGS[char];
       const elements = pattern.match(/[bs]\d/g) || [];
       elements.forEach((el) => {
-        const type = el[0];
         const multiplier = parseInt(el[1]);
         const width = multiplier === 1 ? narrowWidth : wideWidth;
         totalWidth += width;
       });
-      totalWidth += narrowWidth; // gap between characters
+      totalWidth += narrowWidth;
     }
 
     canvas.width = totalWidth + margin * 2;
-    canvas.height = height + 40; // extra space for text at the bottom
+    canvas.height = height + 40;
 
-    // Clear background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw bars
     let currentX = margin;
     ctx.fillStyle = '#000000';
 
@@ -95,10 +86,9 @@ export default function BarcodeGeneratorTool() {
         }
         currentX += width;
       });
-      currentX += narrowWidth; // inter-char gap (white space)
+      currentX += narrowWidth;
     }
 
-    // Draw text label
     ctx.fillStyle = '#000000';
     ctx.font = '14px monospace';
     ctx.textAlign = 'center';

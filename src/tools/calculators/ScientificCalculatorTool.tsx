@@ -8,13 +8,11 @@ import { slideUp, slideX, keypadContainer, keypadRow } from '@/animations/varian
 import { haptics } from '@/utils/haptics';
 import { useAppStore } from '@/hooks/useAppStore';
 
-// ─── Organized key layout ───────────────────────────────
 const TRIG_KEYS  = ['sin(', 'cos(', 'tan(', 'asin(', 'acos(', 'atan('];
 const EXTRA_KEYS = ['log(', 'ln(', 'sqrt(', '^', '!', 'pi'];
 
-// Row layout: C and = sit together at the top of the numpad
 const BASIC_KEYS = [
-  ['C',  '=',  '⌫', '(', ')'],   // C + = top-left, 5 buttons
+  ['C',  '=',  '⌫', '(', ')'],
   ['7',  '8',  '9',  '÷'],
   ['4',  '5',  '6',  '×'],
   ['1',  '2',  '3',  '−'],
@@ -31,7 +29,6 @@ function displayKey(k: string) {
   return MAP[k] ?? k;
 }
 
-/** Auto-shrink font so big results never need dots */
 function getResultFontSize(text: string): string {
   const len = text.replace(/[,. ]/g, '').length;
   if (len <= 7)  return '3rem';
@@ -48,7 +45,7 @@ function getVariant(key: string): 'default' | 'operator' | 'accent' | 'muted' {
   return 'default';
 }
 
-export default function ScientificCalculator() {
+export default function ScientificCalculatorTool() {
   const [expr, setExpr] = useState('');
   const [mode, setMode] = useState<'deg' | 'rad'>('deg');
   const navigate = useNavigate();
@@ -77,7 +74,6 @@ export default function ScientificCalculator() {
   return (
     <div className="flex h-full flex-col gradient-mesh overflow-hidden">
 
-      {/* Mini header */}
       <div className="flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+32px)] pb-3">
         <motion.button
           whileTap={{ scale: 0.88 }}
@@ -102,17 +98,14 @@ export default function ScientificCalculator() {
         </motion.button>
       </div>
 
-      {/* ── Display Panel — single fixed box, nothing changes size, matching basic calculator style ── */}
       <div
         className="calc-display mx-4 mt-1 mb-3 flex flex-col justify-end overflow-hidden rounded-3xl px-5 pt-4 pb-4 text-right"
         style={{ height: '8.5rem', minHeight: '8.5rem', maxHeight: '8.5rem' }}
       >
-        {/* Expression */}
         <p className="font-mono text-sm leading-snug text-[var(--color-text-muted)] break-all opacity-70">
           {expr || '0'}
         </p>
 
-        {/* Result — auto-shrinking, sharp text color with glow */}
         <AnimatePresence mode="popLayout">
           {(() => {
             const formatted = preview !== null
@@ -139,7 +132,6 @@ export default function ScientificCalculator() {
         </AnimatePresence>
       </div>
 
-      {/* ── Bottom: Glass keypad panel ────────────── */}
       <motion.div
         variants={slideUp}
         initial="initial"
@@ -156,7 +148,6 @@ export default function ScientificCalculator() {
           animate="animate"
           className="flex flex-col gap-2"
         >
-          {/* Trig row: sin cos tan asin acos atan */}
           <motion.div variants={keypadRow} className="flex gap-1.5">
             {TRIG_KEYS.map((k) => (
               <CalculatorKey key={k} onPress={() => press(k)} variant="operator" shape="circle"
@@ -166,7 +157,6 @@ export default function ScientificCalculator() {
             ))}
           </motion.div>
 
-          {/* Extra row: log ln √ xʸ n! π */}
           <motion.div variants={keypadRow} className="flex gap-1.5">
             {EXTRA_KEYS.map((k) => (
               <CalculatorKey key={k} onPress={() => press(k)} variant="operator" shape="circle"
@@ -176,7 +166,6 @@ export default function ScientificCalculator() {
             ))}
           </motion.div>
 
-          {/* Basic numpad rows — = is top-left */}
           {BASIC_KEYS.map((row, ri) => (
             <motion.div key={ri} variants={keypadRow} className="flex gap-1.5">
               {row.map((key, ki) => (

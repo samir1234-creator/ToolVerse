@@ -3,7 +3,6 @@ import { motion, useAnimation } from 'framer-motion';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { pageVariants } from '@/animations/variants';
 import { haptics } from '@/utils/haptics';
-import { RotateCw } from 'lucide-react';
 
 export default function DiceRollerTool() {
   const [diceCount, setDiceCount] = useState<number>(1);
@@ -16,10 +15,8 @@ export default function DiceRollerTool() {
     setRolling(true);
     haptics.medium();
 
-    // Roll random values
     const newValues = Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1);
 
-    // Dynamic rotation animation
     await controls.start({
       rotate: [0, 360, 720],
       scale: [1, 1.25, 0.95, 1],
@@ -39,7 +36,6 @@ export default function DiceRollerTool() {
 
   const sum = diceValues.reduce((a, b) => a + b, 0);
 
-  // Helper to draw dice dots based on value
   const renderDiceDots = (val: number) => {
     const dotPositions: Record<number, number[]> = {
       1: [4],
@@ -67,8 +63,6 @@ export default function DiceRollerTool() {
     <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
       <PageHeader title="Dice Roller" subtitle="Roll virtual dice for tabletop board games" />
       <div className="space-y-6 px-4 pb-28 pt-5 flex flex-col items-center">
-        
-        {/* Dice selector */}
         <div className="w-full flex justify-center gap-1.5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-line)] p-1.5">
           {[1, 2, 3, 4, 5, 6].map((num) => (
             <button
@@ -81,7 +75,6 @@ export default function DiceRollerTool() {
           ))}
         </div>
 
-        {/* Dice Showcase */}
         <div className="flex flex-wrap gap-4 justify-center items-center py-6 min-h-[9rem]">
           {diceValues.map((val, idx) => (
             <motion.div
@@ -98,7 +91,6 @@ export default function DiceRollerTool() {
           ))}
         </div>
 
-        {/* Rolling summary result */}
         <div className="text-center space-y-3">
           <span className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
             Total Sum
@@ -108,7 +100,6 @@ export default function DiceRollerTool() {
           </h2>
         </div>
 
-        {/* Roll action Button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleRoll}
@@ -117,7 +108,6 @@ export default function DiceRollerTool() {
         >
           {rolling ? 'Rolling...' : 'Roll Dice'}
         </motion.button>
-
       </div>
     </motion.div>
   );
